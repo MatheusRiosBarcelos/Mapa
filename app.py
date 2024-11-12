@@ -168,9 +168,13 @@ def load_data_from_csv(file_path, sep=';', encoding='Windows-1252'):
 
 @st.cache_data
 def get_capacidade():
-    capacidade_total = df_projects['Capacidade(kt/y)'].sum()
-    capacidade_total_estados = df_projects.groupby('Estado')['Capacidade(kt/y)'].sum().reset_index().sort_values(by = 'Capacidade(kt/y)')
-    return capacidade_total,capacidade_total_estados
+    df_operando = df_projects[df_projects['Status'] == 'Operando']
+    df_viabilidade = df_projects[(df_projects['Status'] == 'Estudo de Viabilidade') | (df_projects['Status'] == 'Conceito') | (df_projects['Status'] == 'Contrução')]
+    capacidade_total_operando = df_operando['Capacidade(kt/y)'].sum()
+    capacidade_total_viabilidade = df_viabilidade['Capacidade(kt/y)'].sum()
+    capacidade_total_estados = df_projects.groupby(['Estado','Status'])['Capacidade(kt/y)'].sum().reset_index().sort_values(by = 'Capacidade(kt/y)')
+    # capacidade_total_estados = capacidade_total_estados[capacidade_total_estados['Capacidade(kt/y)'] > 40]
+    return capacidade_total_operando,capacidade_total_estados,capacidade_total_viabilidade
 
 df = load_data_from_excel("DADOS_UNIVERSIDADES_E_CENTROS_PED.xlsx")
 
@@ -194,7 +198,10 @@ geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects, geo_json_data 
 map = create_map(geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects,geo_json_data)
 col1,col2 = st.columns([0.7,0.3])
 
+
 with col1:
+    st.markdown('<h1 style="font-size:40px;">Análise do Potencial de Produção do H2V no Brasil</h1>', unsafe_allow_html=True)
+
     st_folium(
         map,
         center=st.session_state["center"],
@@ -205,12 +212,34 @@ with col1:
         returned_objects=["last_object_clicked"]
     )
 
-capacidade_total,capacidade_total_estados = get_capacidade()
+capacidade_total_operando,capacidade_total_estados,capacidade_total_viabilidade = get_capacidade()
 with col2:
-    st.metric('Capacidade Total Projetada no Brasil', f'{capacidade_total} kT/y')
-    fig = px.pie(capacidade_total_estados,values = 'Capacidade(kt/y)', names = 'Estado', title='Capacidade Por Estado')
-    fig.update_layout(title_yref='container',title_xanchor = 'center',title_x = 0.5, title_y = 0.95, legend=dict(font=dict(size=18)),font=dict(size=20), title_font=dict(size=20))
+    col3,col4 = st.columns(2)
+    with col3:
+        st.metric('Capacidade Plantas Operantes', f'{capacidade_total_operando} kT/y')
+    
+    with col4:
+        st.metric('Capacidade Plantas em Estudo de Viabilidade',f'{round(capacidade_total_viabilidade,1)} kT/y')
+    threshold = 1000 
+    capacidade_total_estados['Conditional Text'] = capacidade_total_estados['Capacidade(kt/y)'].apply(
+    lambda x: f'{x:.2f}' if x > threshold else '')
+
+    fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade(kt/y)',text_auto='.2s',color = 'Status',color_discrete_sequence=['#42f54b', '#1e4a20'], title='Capacidade de Produção Por Estado')
+    fig.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
     st.plotly_chart(fig,use_container_width=True)
+    
+    target_state = st.selectbox('Estado', df_2['Estado'].sort_values().unique(),index=6,placeholder=('Escolha uma opção'))
+    @st.cache_data
+    def get_df_2_setor():
+        df_2_setor = df_2.groupby(['Setor','Estado']).size().reset_index(name='Contagem').sort_values(by='Contagem')
+        return df_2_setor
+    
+    df_2_setor = get_df_2_setor()
+    df_2_setor = df_2_setor[df_2_setor['Estado'] == target_state]
+
+    fig2 = px.bar(df_2_setor, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'])
+    fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20))    
+    st.plotly_chart(fig2,use_container_width=True)
 
 st.markdown("""
     <style>
