@@ -108,7 +108,7 @@ def create_map(geo_df_list, geo_df_list_2, geo_df_list_UHE, geo_df_list_projects
     i = 0
     for coordinates in geo_df_list_projects:
         icon_html = f"""
-        <div style="font-size: 18px; color: green;">
+        <div style="font-size: 22px; color: green;">
             <i class="fa-solid fa-h"></i>
         </div>
         """
@@ -117,14 +117,17 @@ def create_map(geo_df_list, geo_df_list_2, geo_df_list_UHE, geo_df_list_projects
             location=coordinates,
             icon=custom_icon,
             tooltip=df_projects['Nome'][i],
-            popup=folium.Popup(("Nome Empreendimento: "
+            popup=folium.Popup(("Nome: "
                                 + str(df_projects['Nome'][i])
                                 + "<br>"
-                                + "Status: "
-                                + str(df_projects['Status'][i])
+                                + "Estágio: "
+                                + str(df_projects['Estagio'][i])
                                 + "<br>"
-                                + "Potência do Empreendimento: "
-                                + str(f'{df_projects['Capacidade(kt/y)'][i]} kT/y')),
+                                + "Capacidade (T/ano): "
+                                + str(f'{df_projects['Capacidade'][i]} T/ano')
+                                +"<br>"
+                                +"Local:"
+                                + str(df_projects['Local'][i])),
                             max_width=400)
         ).add_to(fg_projects)
         i += 1
@@ -168,13 +171,15 @@ def load_data_from_csv(file_path, sep=';', encoding='Windows-1252'):
 
 @st.cache_data
 def get_capacidade():
-    df_operando = df_projects[df_projects['Status'] == 'Operando']
-    df_viabilidade = df_projects[(df_projects['Status'] == 'Estudo de Viabilidade') | (df_projects['Status'] == 'Conceito') | (df_projects['Status'] == 'Contrução')]
-    capacidade_total_operando = df_operando['Capacidade(kt/y)'].sum()
-    capacidade_total_viabilidade = df_viabilidade['Capacidade(kt/y)'].sum()
-    capacidade_total_estados = df_projects.groupby(['Estado','Status'])['Capacidade(kt/y)'].sum().reset_index().sort_values(by = 'Capacidade(kt/y)')
+    capacidade_total_operando = df_projects['Capacidade'].sum()
+    capacidade_total_estados = df_projects.groupby(['Estado','Estagio'])['Capacidade'].sum().reset_index().sort_values(by = 'Capacidade')
     # capacidade_total_estados = capacidade_total_estados[capacidade_total_estados['Capacidade(kt/y)'] > 40]
-    return capacidade_total_operando,capacidade_total_estados,capacidade_total_viabilidade
+    porcentagem_capacidade_projeto = df_projects[df_projects['Capacidade'] != 0]
+    # porcentagem_capacidade_projeto['Capacidade'] = round((df_projects['Capacidade']/capacidade_total_operando)*100,2)
+    # porcentagem_capacidade_projeto = porcentagem_capacidade_projeto[porcentagem_capacidade_projeto['Capacidade'] != 0]
+    # porcentagem_capacidade_projeto = porcentagem_capacidade_projeto.sort_values(by='Capacidade').reset_index(drop=True)
+
+    return capacidade_total_operando,capacidade_total_estados,porcentagem_capacidade_projeto
 
 df = load_data_from_excel("DADOS_UNIVERSIDADES_E_CENTROS_PED.xlsx")
 
@@ -182,7 +187,7 @@ df_2 = load_data_from_excel("DADOS_CONSUMIDORES.xlsx")
 
 df_3 = load_data_from_csv('siga.csv')
 
-df_projects = load_data_from_excel('DADOS_PROJETOS.xlsx')
+df_projects = load_data_from_excel('DADOS_PROJETOS_V2.xlsx')
 
 df_UHE = df_3.rename(columns={'NumCoordNEmpreendimento':'Latitude', 'NumCoordEEmpreendimento':'Longitude'})
 df_UHE = df_UHE[(df_UHE['SigTipoGeracao'] == 'UHE') & (df_3['DscFaseUsina'] == 'Operação')]
@@ -196,8 +201,9 @@ geo_df, geo_df_2, geo_df_UHE, geo_df_projects = get_markers_data()
 geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects, geo_json_data  = get_map_data()
 
 map = create_map(geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects,geo_json_data)
-col1,col2 = st.columns([0.7,0.3])
+capacidade_total_operando,capacidade_total_estados,porcentagem_capacidade_projeto = get_capacidade()
 
+col1,col2 = st.columns([0.7,0.3])
 
 with col1:
     st.markdown('<h1 style="font-size:40px;">Análise do Potencial de Produção do H2V no Brasil</h1>', unsafe_allow_html=True)
@@ -208,23 +214,18 @@ with col1:
         zoom=st.session_state["zoom"],
         key="new",
         height=900,
-        width=1300,
+        width=1200,
         returned_objects=["last_object_clicked"]
     )
+    fig3 = px.pie(porcentagem_capacidade_projeto, names = 'Nome', values='Capacidade')
+    st.plotly_chart(fig3,use_container_width=True)
 
-capacidade_total_operando,capacidade_total_estados,capacidade_total_viabilidade = get_capacidade()
+
 with col2:
-    col3,col4 = st.columns(2)
-    with col3:
-        st.metric('Capacidade Plantas Operantes', f'{capacidade_total_operando} kT/y')
-    
-    with col4:
-        st.metric('Capacidade Plantas em Estudo de Viabilidade',f'{round(capacidade_total_viabilidade,1)} kT/y')
-    threshold = 1000 
-    capacidade_total_estados['Conditional Text'] = capacidade_total_estados['Capacidade(kt/y)'].apply(
-    lambda x: f'{x:.2f}' if x > threshold else '')
 
-    fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade(kt/y)',text_auto='.2s',color = 'Status',color_discrete_sequence=['#42f54b', '#1e4a20'], title='Capacidade de Produção Por Estado')
+    st.metric('Potencial Total de produção de H2V', f'{round(capacidade_total_operando,1)} T/ano')
+
+    fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade',text_auto='.2s',color = 'Estagio',color_discrete_sequence=['#1e4a20','#42f54b'], title='Capacidade de Produção Por Estado')
     fig.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
     st.plotly_chart(fig,use_container_width=True)
     
