@@ -43,7 +43,7 @@ def get_map_data():
     return geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects,geo_json_data
 
 def create_map(geo_df_list, geo_df_list_2, geo_df_list_UHE, geo_df_list_projects,geo_json_data):
-    map = folium.Map(location=CENTER_START, tiles=None, zoom_start=ZOOM_START, width='100%',height='100%')
+    map = folium.Map(location=CENTER_START, tiles=None, zoom_start=ZOOM_START)
     folium.TileLayer(tiles='OpenStreetMap', name='Mapa',
                      attr='&copy; <a href="http://www.maptilesapi.com/">MapTiles API</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors').add_to(map)
 
@@ -218,23 +218,13 @@ with col1:
         zoom=st.session_state["zoom"],
         key="new",
         height=900,
-        width=1200,
+        use_container_width=True,
         returned_objects=["last_object_clicked"]
     )
-    col3,col4 = st.columns(2)
-    fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 600)
-    fig3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
-    fig3.update_traces(showlegend=False,textinfo='label',marker=dict(line=dict(color='#000000', width=1)))
-    col3.plotly_chart(fig3,use_container_width=True)
-
-    fig4 = px.pie(porcentagem_capacidade_projeto_nh3v, names = 'Nome', values='Capacidade', title='Projetos de NH3V',color_discrete_sequence=px.colors.sequential.YlOrBr,hole=.3,height= 600)
-    fig4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
-    fig4.update_traces(showlegend=False,textinfo='label',marker=dict(line=dict(color='#000000', width=1)))
-    col4.plotly_chart(fig4,use_container_width=True)
 
 with col2:
 
-    st.metric('Potencial Total de produção de H2V', f'{round(capacidade_total_operando,1)} T/ano')
+    st.metric('Potencial Total de produção de H2V', f'{capacidade_total_operando:,.0f} T/ano'.replace(',', 'X').replace('.', ',').replace('X', '.'))
 
     fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade',text_auto='.2s',color = 'Estagio',color_discrete_sequence=['#1e4a20','#42f54b'], title='Capacidade de Produção Por Estado')
     fig.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
@@ -253,6 +243,16 @@ with col2:
     fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20))    
     st.plotly_chart(fig2,use_container_width=True)
 
+col3,col4 = st.columns(2)
+
+fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 600)
+fig3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
+fig3.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
+col3.plotly_chart(fig3,use_container_width=True)
+fig4 = px.pie(porcentagem_capacidade_projeto_nh3v, names = 'Nome', values='Capacidade', title='Projetos de NH3V',color_discrete_sequence=px.colors.sequential.YlOrBr,hole=.3,height= 600)
+fig4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
+fig4.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
+col4.plotly_chart(fig4,use_container_width=True)
 
 st.markdown("""
     <style>
