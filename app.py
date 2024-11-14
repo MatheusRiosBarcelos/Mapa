@@ -242,21 +242,18 @@ with col5:
         fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
         st.plotly_chart(fig2,use_container_width=True)
 
-placeholder = st.empty()
-time.sleep(4)
 
-with placeholder.container():
-    col3,col4 = st.columns(2, gap='small')
-    with col3:
-        fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 500)
-        fig3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
-        fig3.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
-        st.plotly_chart(fig3,use_container_width=True)
-    with col4:
-        fig4 = px.pie(porcentagem_capacidade_projeto_nh3v, names = 'Nome', values='Capacidade', title='Projetos de NH3V',color_discrete_sequence=px.colors.sequential.YlOrBr,hole=.3,height= 500)
-        fig4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
-        fig4.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
-        st.plotly_chart(fig4,use_container_width=True)
+col3,col4 = st.columns(2, gap='small')
+with col3:
+    fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 500)
+    fig3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
+    fig3.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
+    st.plotly_chart(fig3,use_container_width=True)
+with col4:
+    fig4 = px.pie(porcentagem_capacidade_projeto_nh3v, names = 'Nome', values='Capacidade', title='Projetos de NH3V',color_discrete_sequence=px.colors.sequential.YlOrBr,hole=.3,height= 500)
+    fig4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
+    fig4.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
+    st.plotly_chart(fig4,use_container_width=True)
 
 st.markdown("""
     <style>
