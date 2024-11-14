@@ -211,7 +211,7 @@ col1,col2,col5 = st.columns([0.33,0.33,0.33],gap='small')
 with col1:
         
     st.markdown('<h1 style="font-size:40px;">Análise do Potencial de Produção do H2V no Brasil</h1>', unsafe_allow_html=True)
-    with st.container():
+    with st.container(height= 350):
          st_folium(
             map,
             center=st.session_state["center"],
