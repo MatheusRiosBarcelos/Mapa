@@ -18,6 +18,9 @@ if "markers" not in st.session_state:
 
 st.set_page_config(layout="wide")
 
+st.image('logo-unifei-grande.png', width=100)
+
+
 @st.cache_data
 def get_markers_data():
     # Criação de GeoDataFrames
@@ -70,8 +73,10 @@ def create_map(geo_df_list, geo_df_list_2, geo_df_list_UHE, geo_df_list_projects
                                 + "Área de Pesquisa: "
                                 + str(df['Área de Pesquisa'][i])
                                 + "<br>"
-                                + "Site: "
-                                + str(df['Sites'][i])),
+                                + "Status:"
+                                + str(df['(E)xistente/(P)otencial'][i])
+                                + "<br>"
+                                + "Site: <a href='" + str(df['Sites'][i]) + "' target='_blank'>" + str(df['Sites'][i]) + "</a>"),
                                max_width=400)
         ).add_to(fg)
 
@@ -173,13 +178,11 @@ def load_data_from_csv(file_path, sep=';', encoding='Windows-1252'):
 def get_capacidade():
     capacidade_total_operando = df_projects['Capacidade'].sum()
     capacidade_total_estados = df_projects.groupby(['Estado','Estagio'])['Capacidade'].sum().reset_index().sort_values(by = 'Capacidade')
-    # capacidade_total_estados = capacidade_total_estados[capacidade_total_estados['Capacidade(kt/y)'] > 40]
-    porcentagem_capacidade_projeto = df_projects[df_projects['Capacidade'] != 0]
-    # porcentagem_capacidade_projeto['Capacidade'] = round((df_projects['Capacidade']/capacidade_total_operando)*100,2)
-    # porcentagem_capacidade_projeto = porcentagem_capacidade_projeto[porcentagem_capacidade_projeto['Capacidade'] != 0]
-    # porcentagem_capacidade_projeto = porcentagem_capacidade_projeto.sort_values(by='Capacidade').reset_index(drop=True)
+    porcentagem_capacidade_projeto_h2v = df_projects[(df_projects['Capacidade'] != 0) & (df_projects['Finalidade'] == 'H2V')]
+    porcentagem_capacidade_projeto_nh3v = df_projects[(df_projects['Capacidade'] != 0) & (df_projects['Finalidade'] == 'NH3V')]
 
-    return capacidade_total_operando,capacidade_total_estados,porcentagem_capacidade_projeto
+
+    return capacidade_total_operando,capacidade_total_estados,porcentagem_capacidade_projeto_h2v,porcentagem_capacidade_projeto_nh3v
 
 df = load_data_from_excel("DADOS_UNIVERSIDADES_E_CENTROS_PED.xlsx")
 
@@ -201,9 +204,10 @@ geo_df, geo_df_2, geo_df_UHE, geo_df_projects = get_markers_data()
 geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects, geo_json_data  = get_map_data()
 
 map = create_map(geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects,geo_json_data)
-capacidade_total_operando,capacidade_total_estados,porcentagem_capacidade_projeto = get_capacidade()
+capacidade_total_operando,capacidade_total_estados,porcentagem_capacidade_projeto_h2v,porcentagem_capacidade_projeto_nh3v = get_capacidade()
 
 col1,col2 = st.columns([0.7,0.3])
+
 
 with col1:
     st.markdown('<h1 style="font-size:40px;">Análise do Potencial de Produção do H2V no Brasil</h1>', unsafe_allow_html=True)
@@ -217,9 +221,16 @@ with col1:
         width=1200,
         returned_objects=["last_object_clicked"]
     )
-    fig3 = px.pie(porcentagem_capacidade_projeto, names = 'Nome', values='Capacidade')
-    st.plotly_chart(fig3,use_container_width=True)
+    col3,col4 = st.columns(2)
+    fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 600)
+    fig3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
+    fig3.update_traces(showlegend=False,textinfo='label',marker=dict(line=dict(color='#000000', width=1)))
+    col3.plotly_chart(fig3,use_container_width=True)
 
+    fig4 = px.pie(porcentagem_capacidade_projeto_nh3v, names = 'Nome', values='Capacidade', title='Projetos de NH3V',color_discrete_sequence=px.colors.sequential.YlOrBr,hole=.3,height= 600)
+    fig4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
+    fig4.update_traces(showlegend=False,textinfo='label',marker=dict(line=dict(color='#000000', width=1)))
+    col4.plotly_chart(fig4,use_container_width=True)
 
 with col2:
 
@@ -241,6 +252,7 @@ with col2:
     fig2 = px.bar(df_2_setor, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'])
     fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20))    
     st.plotly_chart(fig2,use_container_width=True)
+
 
 st.markdown("""
     <style>
