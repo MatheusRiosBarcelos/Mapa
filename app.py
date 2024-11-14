@@ -243,10 +243,10 @@ with col5:
         st.plotly_chart(fig2,use_container_width=True)
 
 placeholder = st.empty()
-time.sleep(3)
-col3,col4 = st.columns(2, gap='small')
+time.sleep(4)
 
 with placeholder.container():
+    col3,col4 = st.columns(2, gap='small')
     with col3:
         fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 500)
         fig3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
