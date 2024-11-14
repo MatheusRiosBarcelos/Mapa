@@ -18,7 +18,7 @@ if "markers" not in st.session_state:
 
 st.set_page_config(layout="wide")
 
-st.image('logo-unifei-grande.png', width=100)
+# st.image('logo-unifei-grande.png', width=100)
 
 
 @st.cache_data
@@ -206,8 +206,7 @@ geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects, geo_json_data 
 map = create_map(geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects,geo_json_data)
 capacidade_total_operando,capacidade_total_estados,porcentagem_capacidade_projeto_h2v,porcentagem_capacidade_projeto_nh3v = get_capacidade()
 
-col1,col2 = st.columns([0.7,0.3])
-
+col1,col2,col5 = st.columns([0.33,0.33,0.33])
 
 with col1:
     st.markdown('<h1 style="font-size:40px;">Análise do Potencial de Produção do H2V no Brasil</h1>', unsafe_allow_html=True)
@@ -217,7 +216,7 @@ with col1:
         center=st.session_state["center"],
         zoom=st.session_state["zoom"],
         key="new",
-        height=900,
+        height=500,
         use_container_width=True,
         returned_objects=["last_object_clicked"]
     )
@@ -226,10 +225,10 @@ with col2:
 
     st.metric('Potencial Total de produção de H2V', f'{capacidade_total_operando:,.0f} T/ano'.replace(',', 'X').replace('.', ',').replace('X', '.'))
 
-    fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade',text_auto='.2s',color = 'Estagio',color_discrete_sequence=['#1e4a20','#42f54b'], title='Capacidade de Produção Por Estado')
-    fig.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
+    fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade',text_auto='.2s',color = 'Estagio',color_discrete_sequence=['#1e4a20','#42f54b'], title='Capacidade de Produção Por Estado',height=500)
+    fig.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
     st.plotly_chart(fig,use_container_width=True)
-    
+with col5:
     target_state = st.selectbox('Estado', df_2['Estado'].sort_values().unique(),index=6,placeholder=('Escolha uma opção'))
     @st.cache_data
     def get_df_2_setor():
@@ -239,17 +238,17 @@ with col2:
     df_2_setor = get_df_2_setor()
     df_2_setor = df_2_setor[df_2_setor['Estado'] == target_state]
 
-    fig2 = px.bar(df_2_setor, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'])
-    fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20))    
+    fig2 = px.bar(df_2_setor, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Principais Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'],height=500)
+    fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
     st.plotly_chart(fig2,use_container_width=True)
 
 col3,col4 = st.columns(2)
 
-fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 600)
+fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 500)
 fig3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
 fig3.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
 col3.plotly_chart(fig3,use_container_width=True)
-fig4 = px.pie(porcentagem_capacidade_projeto_nh3v, names = 'Nome', values='Capacidade', title='Projetos de NH3V',color_discrete_sequence=px.colors.sequential.YlOrBr,hole=.3,height= 600)
+fig4 = px.pie(porcentagem_capacidade_projeto_nh3v, names = 'Nome', values='Capacidade', title='Projetos de NH3V',color_discrete_sequence=px.colors.sequential.YlOrBr,hole=.3,height= 500)
 fig4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
 fig4.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
 col4.plotly_chart(fig4,use_container_width=True)
