@@ -6,3 +6,4 @@ requests
 plotly
 streamlit-folium
 openpyxl
+option_menu
