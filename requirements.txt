@@ -7,3 +7,5 @@ plotly
 streamlit-folium
 openpyxl
 streamlit_option_menu
+brazilcep
+geopy
