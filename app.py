@@ -6,6 +6,11 @@ import streamlit as st
 from streamlit_folium import st_folium
 import plotly.express as px
 import time
+from streamlit_option_menu import option_menu
+import brazilcep
+from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
+
 
 CENTER_START = [-15.7942, -47.8822]
 ZOOM_START = 4  
@@ -207,53 +212,142 @@ geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects, geo_json_data 
 map = create_map(geo_df_list, geo_df_list_2, geo_df_list_UHE,geo_df_list_projects,geo_json_data)
 capacidade_total_operando,capacidade_total_estados,porcentagem_capacidade_projeto_h2v,porcentagem_capacidade_projeto_nh3v = get_capacidade()
 
-col1,col2,col5 = st.columns([0.33,0.33,0.33],gap='small')
-with col1:
-        
-    st.markdown('<h1 style="font-size:40px;">Análise do Potencial de Produção do H2V no Brasil</h1>', unsafe_allow_html=True)
-    with st.container(height= 350):
-         st_folium(
-            map,
-            center=st.session_state["center"],
-            zoom=st.session_state["zoom"],
-            key="new",
-            height=300,
-            use_container_width=True,
-            returned_objects=["last_object_clicked"]
+with st.sidebar:
+    selected = option_menu(
+            "Menu",
+            [
+                "DASHBOARD H2V BRASIL",
+                "FORMULÁRIO CAPTAÇÃO DE DADOS"
+            ],
+            icons=[ "list-task","list-task"],
+            menu_icon="list",
+            default_index=0,
+            orientation="vertical"
         )
-with col2:
+    
+if selected == "DASHBOARD H2V BRASIL":
+    col1,col2,col5 = st.columns([0.33,0.33,0.33],gap='small')
+    with col1:
+            
+        st.markdown('<h1 style="font-size:40px;">Análise do Potencial de Produção do H2V no Brasil</h1>', unsafe_allow_html=True)
+        with st.container(height= 350):
+            st_folium(
+                map,
+                center=st.session_state["center"],
+                zoom=st.session_state["zoom"],
+                key="new",
+                height=300,
+                use_container_width=True,
+                returned_objects=["last_object_clicked"]
+            )
+    with col2:
 
-        st.metric('Potencial Total de produção de H2V', f'{capacidade_total_operando:,.0f} T/ano'.replace(',', 'X').replace('.', ',').replace('X', '.'))
+            st.metric('Potencial Total de produção de H2V', f'{capacidade_total_operando:,.0f} T/ano'.replace(',', 'X').replace('.', ',').replace('X', '.'))
 
-        fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade',text_auto='.2s',color = 'Estagio',color_discrete_sequence=['#1e4a20','#42f54b'], title='Capacidade de Produção Por Estado',height=400)
-        fig.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
-        st.plotly_chart(fig,use_container_width=True)
-with col5:
-        target_state = st.selectbox('Estado', df_2['Estado'].sort_values().unique(),index=6,placeholder=('Escolha uma opção'))
-        @st.cache_data
-        def get_df_2_setor():
-            df_2_setor = df_2.groupby(['Setor','Estado']).size().reset_index(name='Contagem').sort_values(by='Contagem')
-            return df_2_setor
-        
-        df_2_setor = get_df_2_setor()
-        df_2_setor = df_2_setor[df_2_setor['Estado'] == target_state]
+            fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade',text_auto='.2s',color = 'Estagio',color_discrete_sequence=['#1e4a20','#42f54b'], title='Capacidade de Produção Por Estado',height=400)
+            fig.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+            st.plotly_chart(fig,use_container_width=True)
+    with col5:
+            target_state = st.selectbox('Estado', df_2['Estado'].sort_values().unique(),index=6,placeholder=('Escolha uma opção'))
+            @st.cache_data
+            def get_df_2_setor():
+                df_2_setor = df_2.groupby(['Setor','Estado']).size().reset_index(name='Contagem').sort_values(by='Contagem')
+                return df_2_setor
+            
+            df_2_setor = get_df_2_setor()
+            df_2_setor = df_2_setor[df_2_setor['Estado'] == target_state]
 
-        fig2 = px.bar(df_2_setor, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Principais Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'],height=400)
-        fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
-        st.plotly_chart(fig2,use_container_width=True)
+            fig2 = px.bar(df_2_setor, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Principais Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'],height=400)
+            fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
+            st.plotly_chart(fig2,use_container_width=True)
+
+    col3,col4 = st.columns(2, gap='small')
+    with col3:
+        fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 500)
+        fig3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
+        fig3.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
+        st.plotly_chart(fig3,use_container_width=True)
+    with col4:
+        fig4 = px.pie(porcentagem_capacidade_projeto_nh3v, names = 'Nome', values='Capacidade', title='Projetos de NH3V',color_discrete_sequence=px.colors.sequential.YlOrBr,hole=.3,height= 500)
+        fig4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
+        fig4.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
+        st.plotly_chart(fig4,use_container_width=True)
+
+if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
+
+    with st.form('my_form_1'):
+        col1, col2 = st.columns([0.5,0.5])
+        with col1:
+            nome_instituicao = st.text_input('Nome da Instituição ou Empresa') 
+        with col2:
+            area = st.selectbox('Selecione a área de atuação', ['Consumo', 'Produção', 'Pesquisa'], index=None)  
+        col3, col4 = st.columns([0.5,0.5])
+        with col3:
+            cep = st.text_input('CEP')
+            cep_sem_hifen = cep.replace("-","")
+        with col4:
+            num = st.text_input('Número do Local')
+        if cep_sem_hifen.isdigit():    
+            address = brazilcep.get_address_from_cep(cep_sem_hifen)
+            geolocator = Nominatim(user_agent="test_app")
+            location = geolocator.geocode(address['street'] + ", " + address['city'] + " - " + address['district'])
+
+            col15,col16,col17 = st.columns(3)
+            with col15:
+                rua = st.text_input('Rua', address['street'])
+            with col16:
+                bairro = st.text_input('Bairro', address['district'])
+            with col17:
+                cidade = st.text_input('Cidade', address['city'])
+
+        submitted_1 = st.form_submit_button("Carregue o Formulário Específico")
+    if area == 'Consumo':
+        with st.form('my_form_2'):
+            col11,col12 = st.columns(2)
+            with col11:
+                setor = st.text_input('Setor de Atuação (Ex: Alimentação , cimento e etc)')
+            with col12:
+                site_empresa = st.text_input('Site da Empresa')
+            col13,col14 = st.columns(2)
+            with col13:
+                st.number_input('Consumo médio de H2 por ano (T/ano)', step=100)
+
+            submitted_2 = st.form_submit_button("Submit")
+    
+    if area == 'Produção':
+        with st.form('my_form_3', enter_to_submit=False):
+            col5,col6 = st.columns(2)
+            with col5:
+                finalidade = st.selectbox('Selecione a finalidade', ['H2V', 'NH3V'])
+            with col6:
+                estagio = st.text_input('Estágio da operação (Por exemplo P&D, MoU ou Operando)')
+            col7,col8 = st.columns(2)
+            with col7:
+                tecnologia = st.text_input('Tecnologia utilizada (Por exemplo PEM e Eletrólise Alcalina)')
+            with col8:
+                capacidade = st.number_input('Capacidade de Produção esperada ou em operação (T/ano)', step=100)
+            
+            
+            submitted_3 = st.form_submit_button("Submit")
 
 
-col3,col4 = st.columns(2, gap='small')
-with col3:
-    fig3 = px.pie(porcentagem_capacidade_projeto_h2v, names = 'Nome', values='Capacidade', title='Projetos de H2V',color_discrete_sequence=px.colors.sequential.Greens,hole=.3,height= 500)
-    fig3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
-    fig3.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
-    st.plotly_chart(fig3,use_container_width=True)
-with col4:
-    fig4 = px.pie(porcentagem_capacidade_projeto_nh3v, names = 'Nome', values='Capacidade', title='Projetos de NH3V',color_discrete_sequence=px.colors.sequential.YlOrBr,hole=.3,height= 500)
-    fig4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
-    fig4.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
-    st.plotly_chart(fig4,use_container_width=True)
+    if area == 'Pesquisa':
+        with st.form('my_form_4', enter_to_submit=False):
+            col9,col10 = st.columns(2)
+            with col9:
+                area_pesquisa = st.text_input('Área de Pesquisa')
+
+            with col10:
+                site = st.text_input('Site da Instituição')
+
+            st.text_area('Quantos e quais Projetos já foram Realziados pela instituição?') 
+
+
+
+
+            submitted_4 = st.form_submit_button("Submit")
+  
+
 
 st.markdown("""
     <style>
