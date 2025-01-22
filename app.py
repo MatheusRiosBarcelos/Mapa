@@ -274,19 +274,19 @@ if selected == "DASHBOARD H2V BRASIL":
         st.plotly_chart(fig4,use_container_width=True)
 
 if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
-
+    st.markdown('<h1 style="font-size:40px;">Formulario Geral</h>', unsafe_allow_html=True)
     with st.form('my_form_1'):
         col1, col2 = st.columns([0.5,0.5])
         with col1:
             nome_instituicao = st.text_input('Nome da Instituição ou Empresa') 
         with col2:
             area = st.selectbox('Selecione a área de atuação', ['Consumo', 'Produção', 'Pesquisa'], index=None)  
-        col3, col4 = st.columns([0.5,0.5])
+        col3, col4,col18 = st.columns(3)
         with col3:
-            cep = st.text_input('CEP')
+            cep = st.text_input('CEP (XXXXX-XXX)')
             cep_sem_hifen = cep.replace("-","")
         with col4:
-            num = st.text_input('Número do Local')
+            num = st.text_input('Número do Local')    
         if cep_sem_hifen.isdigit():    
             address = brazilcep.get_address_from_cep(cep_sem_hifen)
             geolocator = Nominatim(user_agent="test_app")
@@ -299,8 +299,11 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
                 bairro = st.text_input('Bairro', address['district'])
             with col17:
                 cidade = st.text_input('Cidade', address['city'])
+            with col18:
+                estado = st.text_input('Estado', address['uf'])
 
         submitted_1 = st.form_submit_button("Carregue o Formulário Específico")
+    st.markdown('<h1 style="font-size:40px;">Formulario Específico</h1>',unsafe_allow_html=True)
     if area == 'Consumo':
         with st.form('my_form_2'):
             col11,col12 = st.columns(2)
@@ -312,7 +315,7 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
             with col13:
                 st.number_input('Consumo médio de H2 por ano (T/ano)', step=100)
 
-            submitted_2 = st.form_submit_button("Submit")
+            submitted_2 = st.form_submit_button("Envia Formulário Completo")
     
     if area == 'Produção':
         with st.form('my_form_3', enter_to_submit=False):
@@ -328,7 +331,7 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
                 capacidade = st.number_input('Capacidade de Produção esperada ou em operação (T/ano)', step=100)
             
             
-            submitted_3 = st.form_submit_button("Submit")
+            submitted_3 = st.form_submit_button("Envia Formulário Completo")
 
 
     if area == 'Pesquisa':
@@ -345,7 +348,7 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
 
 
 
-            submitted_4 = st.form_submit_button("Submit")
+            submitted_4 = st.form_submit_button("Envia Formulário Completo")
   
 
 
