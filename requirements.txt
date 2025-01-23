@@ -9,3 +9,5 @@ openpyxl
 streamlit_option_menu
 brazilcep
 geopy
+sqlalchemy
+mysql-connector-python
