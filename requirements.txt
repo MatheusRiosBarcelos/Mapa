@@ -11,3 +11,4 @@ brazilcep
 geopy
 sqlalchemy
 mysql-connector-python
+streamlit_js_eval
