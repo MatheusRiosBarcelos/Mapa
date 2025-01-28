@@ -12,6 +12,8 @@ from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
 import mysql.connector
 from sqlalchemy import create_engine , text
+from streamlit_js_eval import streamlit_js_eval
+
 
 CENTER_START = [-15.7942, -47.8822]
 ZOOM_START = 4  
@@ -441,6 +443,8 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
             if submitted_2:
                 insert_data_to_db_consumidor(rua,cidade,estado,num,bairro,setor,site_empresa,consumo,latitude,longitude,engine)
                 st.success("Formulário Registrado")
+                streamlit_js_eval(js_expressions="parent.window.location.reload()")
+
     
     if area == 'Produção':
         with st.form('my_form_3', enter_to_submit=False):
@@ -461,6 +465,7 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
             if submitted_3:
                 insert_data_to_db_projects(rua,cidade,estado,num,bairro,finalidade,estagio,capacidade,latitude,longitude,engine)
                 st.success("Formulário Registrado")
+                streamlit_js_eval(js_expressions="parent.window.location.reload()")
 
     if area == 'Pesquisa':
         with st.form('my_form_4', enter_to_submit=False):
@@ -473,15 +478,13 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
 
             projetos = st.text_area('Quantos e quais Projetos já foram Realziados pela instituição?') 
 
-
-
-
             submitted_4 = st.form_submit_button("Envia Formulário Completo")
             if submitted_4:
                 insert_data_to_db_pesquisa(rua,cidade,estado,num,bairro,area_pesquisa,site,projetos,latitude,longitude,engine)
                 st.success("Formulário Registrado")
-  
+                streamlit_js_eval(js_expressions="parent.window.location.reload()")
 
+  
 
 st.markdown("""
     <style>
