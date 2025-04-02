@@ -15,8 +15,6 @@ from sqlalchemy import create_engine , text
 from streamlit_js_eval import streamlit_js_eval
 import googlemaps
 
-
-
 CENTER_START = [-15.7942, -47.8822]
 ZOOM_START = 4  
 
@@ -231,9 +229,9 @@ def insert_data_to_db_projects(rua,cidade,estado,num,bairro,finalidade,estagio,c
     with engine.connect() as conn:  # Usar 'with' para garantir que a conexão será fechada automaticamente
         sql = """
         INSERT INTO DADOS_PROJETOS
-        (`Instituicao`, `CEP`, `Numero`, `Estado`, `Rua`, `Bairro`, `Cidade`, `Finalidade`, `Estágio`, `Tecnologia`, `Capacidade`,`Site`, `Latitude`, `Longitude`)
+        (`Instituicao`, `CEP`, `Numero`, `Estado`, `Rua`, `Bairro`, `Cidade`, `Finalidade`, `Estágio`, `Tecnologia`, `Capacidade`,`Quantidade_plantas`,`Demais_areas`,`Expectativa_crescimento`,`Setor`,`Site`, `Latitude`, `Longitude`)
         VALUES 
-        (:Instituição, :CEP, :Numero, :Estado, :Rua, :Bairro, :Cidade, :Finalidade, :Estágio, :Tecnologia, :Capacidade,:Site ,:Latitude, :Longitude)
+        (:Instituição, :CEP, :Numero, :Estado, :Rua, :Bairro, :Cidade, :Finalidade, :Estágio, :Tecnologia, :Capacidade,:Quantidade_plantas,:Demais_areas,:Expectativa_crescimento,:Setor,:Site ,:Latitude, :Longitude)
         """
         
         # Usando dicionário para passar parâmetros nomeados para a query
@@ -249,6 +247,10 @@ def insert_data_to_db_projects(rua,cidade,estado,num,bairro,finalidade,estagio,c
             'Estágio': estagio,
             'Tecnologia': tecnologia,
             'Capacidade': capacidade,
+            'Quantidade_plantas': qntd_plantas,
+            'Demais_areas': demais_areas,
+            'Expectativa_crescimento': expectativa_crescimento,
+            'Setor': setor,
             'Site': site,
             'Latitude': latitude,
             'Longitude': longitude
@@ -261,9 +263,9 @@ def insert_data_to_db_consumidor(rua,cidade,estado,num,bairro,setor,site_empresa
     with engine.connect() as conn:  # Usar 'with' para garantir que a conexão será fechada automaticamente
         sql = """
         INSERT INTO DADOS_CONSUMIDORES
-        (`Instituicao`, `CEP`, `Numero`, `Estado`, `Rua`, `Bairro`, `Cidade`, `Setor`, `Consumo H2`, `Site`, `Latitude`, `Longitude`)
+        (`Instituicao`, `CEP`, `Numero`, `Estado`, `Rua`, `Bairro`, `Cidade`, `Setor`, `Consumo H2`, `Site`,`Numero_plantas`,`Custo_anual`,`Considera_produzir`, `Latitude`, `Longitude`)
         VALUES 
-        (:Instituição, :CEP, :Numero, :Estado, :Rua, :Bairro, :Cidade, :Setor, :Consumo_H2, :Site, :Latitude, :Longitude)
+        (:Instituição, :CEP, :Numero, :Estado, :Rua, :Bairro, :Cidade, :Setor, :Consumo_H2, :Site,:Numero_plantas,:Custo_anual,:Considera_produzir, :Latitude, :Longitude)
         """
         
         # Usando dicionário para passar parâmetros nomeados para a query
@@ -278,6 +280,9 @@ def insert_data_to_db_consumidor(rua,cidade,estado,num,bairro,setor,site_empresa
             'Setor': setor,
             'Consumo_H2': consumo,
             'Site': site_empresa,
+            'Numero_plantas': numero_plantas,
+            'Custo_anual': custo_anual,
+            'Considera_produzir': considera_produzir,
             'Latitude': latitude,
             'Longitude': longitude
         }
@@ -289,9 +294,9 @@ def insert_data_to_db_pesquisa(rua,cidade,estado,num,bairro,area_pesquisa,site,p
     with engine.connect() as conn:  # Usar 'with' para garantir que a conexão será fechada automaticamente
         sql = """
         INSERT INTO DADOS_UNIVERSIDADES_E_CENTROS_PED
-        (`Instituicao`, `CEP`, `Numero`, `Estado`, `Rua`, `Bairro`, `Cidade`, `Area de pesquisa`, `Projetos`, `Site`, `Latitude`, `Longitude`)
+        (`Instituicao`, `CEP`, `Numero`, `Estado`, `Rua`, `Bairro`, `Cidade`, `Area de pesquisa`, `Projetos`, `Site`,`Quantidade_grupos`,`Quantidade_realizados`, `Latitude`, `Longitude`)
         VALUES 
-        (:Instituição, :CEP, :Numero, :Estado, :Rua, :Bairro, :Cidade, :Area, :Projetos, :Site, :Latitude, :Longitude)
+        (:Instituição, :CEP, :Numero, :Estado, :Rua, :Bairro, :Cidade, :Area, :Projetos, :Site, :Quantidade_grupos, :Quantidade_realizados, :Latitude, :Longitude)
         """
         
         # Usando dicionário para passar parâmetros nomeados para a query
@@ -306,6 +311,8 @@ def insert_data_to_db_pesquisa(rua,cidade,estado,num,bairro,area_pesquisa,site,p
             'Area': area_pesquisa,
             'Projetos': projetos,
             'Site': site,
+            'Quantidade_grupos': qntd_grupos,
+            'Quantidade_realizados': qntd_realizados,
             'Latitude': latitude,
             'Longitude': longitude
         }
@@ -473,12 +480,20 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
         with st.form('my_form_2'):
             col11,col12 = st.columns(2)
             with col11:
-                setor = st.text_input('Setor de Atuação (Ex: Alimentação , cimento e etc)')
+                setor = st.selectbox('Qual o setor em que sua empresa atua?', ['Óleo e Gás','Geração de Energia', 'Alimentos e Bebidas', 'Fertilizantes', 'Siderúrgico', 'Químico/Petroquímico', 'Outro'],index=None)
+
             with col12:
                 site_empresa = st.text_input('Site da Empresa')
             col13,col14 = st.columns(2)
             with col13:
                consumo = st.number_input('Consumo médio de H2 por ano (T/ano)', step=100)
+            with col14:
+                numero_plantas = st.number_input('Sua empresa está operando em quantas plantas com consumo de H2?', step=1)
+            colc1,colc2 = st.columns(2)
+            with colc1:
+                custo_anual = st.number_input('Qual o custo anual da sua empresa com hidrogênio?', step=1000)
+            with colc2:
+                considera_produzir = st.selectbox('Sua empresa considera a produção própria de hidrogênio baseado em fontes renováveis?', ['Não há planos de uma produção própria de hidrogênio', 'Sim, memso que o custo para redução da carga de CO2 seja mais elevado','Sim, com incentivos do governo', 'Sim, caso seja economicamente viável'], index=None)
 
             submitted_2 = st.form_submit_button("Envia Formulário Completo")
             if submitted_2:
@@ -492,7 +507,6 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
                 st.write(f"Latitude antes do insert: {latitude}, Longitude antes do insert: {longitude}")
                 streamlit_js_eval(js_expressions="parent.window.location.reload()")
 
-    
     if area == 'Produção':
         with st.form('my_form_3', enter_to_submit=False):
             col5,col6 = st.columns(2)
@@ -502,9 +516,19 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
                 estagio = st.text_input('Estágio da operação (Por exemplo P&D, MoU ou Operando)')
             col7,col8 = st.columns(2)
             with col7:
-                tecnologia = st.text_input('Tecnologia utilizada (Por exemplo PEM e Eletrólise Alcalina)')
+                tecnologia = st.selectbox('Tecnologia utilizada', ['PEM', 'Eletrólise Alcalina'], index=None)
             with col8:
                 capacidade = st.number_input('Capacidade de Produção esperada ou em operação (T/ano)', step=100)
+            colp1,colp2 = st.columns(2)
+            with colp1:
+                qntd_plantas = st.number_input('Quantas plantas de produção sua empresa está operando?', step=1)
+            with colp2:
+                demais_areas = st.selectbox('Além da produção de hidrogênio, em quais outras áreas sua empresa atua?', ['Prestação de Serviços','Fornecimento de Tecnologia para H2','Consumo de H2','Armazenamento e Distribuição de H2'],index=None)
+            colp3,colp4 = st.columns(2)
+            with colp3:
+                expectativa_crescimento = st.selectbox('Qual a expectativa de crescimento do faturamento com a venda de hidrogênio verde até 2030?', ['Não está em nossos planos', '>50%', '25%-50%', "10%-25%", '10%-25%', '0-10%'],index=None)
+            with colp4:
+                setor = st.selectbox('Qual o setor em que sua empresa atua?', ['Óleo e Gás','Geração de Energia', 'Alimentos e Bebidas', 'Fertilizantes', 'Siderúrgico', 'Químico/Petroquímico', 'Outro'],index=None)
             
             site = st.text_input('Site')
             
@@ -521,12 +545,19 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
         with st.form('my_form_4', enter_to_submit=False):
             col9,col10 = st.columns(2)
             with col9:
-                area_pesquisa = st.text_input('Área de Pesquisa')
+                area_pesquisa = st.multiselect('Área de Pesquisa (Selecione todas as que se aplicam)',['Equipamentos Industriais', 'Fertilizantes','Cimento','Alimentos e Bebidas','Siderúrgico','Usina de álcool e açucar', 'Química', 'Geração de Eletricidade', 'Construtoras', 'Mineradoras', 'Gás e Petróleo', 'Transporte e Mobilidade', 'Outros'])
+                area_pesquisa = ", ".join(area_pesquisa)
 
             with col10:
                 site = st.text_input('Site da Instituição')
 
-            projetos = st.text_area('Quantos e quais Projetos já foram Realziados pela instituição?') 
+            cold11,cold12 = st.columns(2)
+            with cold11:
+                qntd_grupos = st.number_input('Atualmente, quantos grupos de pesquisa na área de hidrogênio a isntituição possui?', step=1)
+            with cold12:
+                qntd_realizados = st.number_input('Quantos projetos na área de hidrogênio já foram realziados pela instituição?', step=1)
+
+            projetos = st.text_area('Quais foram esses projetos realziados pela instituição?') 
 
             submitted_4 = st.form_submit_button("Envia Formulário Completo")
             if submitted_4:
