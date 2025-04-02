@@ -513,7 +513,7 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
             with col5:
                 finalidade = st.selectbox('Selecione a finalidade', ['H2V', 'NH3V'])
             with col6:
-                estagio = st.text_input('Estágio da operação (Por exemplo P&D, MoU ou Operando)')
+                estagio = st.selectbox('Estágio da operação',['P&D', 'MoU', 'Operando'], index=None)
             col7,col8 = st.columns(2)
             with col7:
                 tecnologia = st.selectbox('Tecnologia utilizada', ['PEM', 'Eletrólise Alcalina'], index=None)
