@@ -7,7 +7,6 @@ from streamlit_folium import st_folium
 import plotly.express as px
 import time
 from streamlit_option_menu import option_menu
-import brazilcep
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
 import mysql.connector
@@ -352,51 +351,38 @@ with st.sidebar:
     selected = option_menu(
             "Menu",
             [
-                "DASHBOARD H2V BRASIL",
+                "MAPA H2V BRASIL",
+                "ANÁLISE CONSUMIDORES",
+                "ANÁLISE PRODUTORES",
+                "ANÁLISE P&D",
                 "FORMULÁRIO CAPTAÇÃO DE DADOS"
             ],
-            icons=[ "list-task","list-task"],
+            icons=[ "list-task","list-task","list-task","list-task","list-task"],
             menu_icon="list",
             default_index=0,
             orientation="vertical"
         )
     
-if selected == "DASHBOARD H2V BRASIL":
-    st.markdown('<h1 style="font-size:40px;">Análise do Potencial de Produção do H2V no Brasil</h1>', unsafe_allow_html=True)
+if selected == "MAPA H2V BRASIL":
+    st.markdown('<h1 style="font-size:40px;">Mapeamento do H2V no Brasil</h1>', unsafe_allow_html=True)
 
-    col1,col2,col5 = st.columns([0.33,0.33,0.33],gap='small')
+    col1,col2 = st.columns(2,gap='small')
     with col1:
         st.metric('Potencial Total de produção de H2V', f'{capacidade_total_operando_h2v} KT/ano'.replace(',', 'X').replace('.', ',').replace('X', '.'))
 
-        with st.container(height= 350):
-            st_folium(
-                map,
-                center=st.session_state["center"],
-                zoom=st.session_state["zoom"],
-                key="new",
-                height=300,
-                use_container_width=True,
-                returned_objects=["last_object_clicked"]
-            )
     with col2:
             st.metric('Potencial Total de produção de NH3V', f'{capacidade_total_operando_nh3v} KT/ano'.replace(',', 'X').replace('.', ',').replace('X', '.'))
 
-            fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade',text_auto='.2s',color = 'Estágio',color_discrete_sequence=['#1e4a20','#42f54b'], title='Capacidade de Produção Por Estado (KT/ano)',height=400)
-            fig.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
-            st.plotly_chart(fig,use_container_width=True)
-    with col5:
-            target_state = st.selectbox('Estado', df_2['Estado'].sort_values().unique(),index=0,placeholder=('Escolha uma opção'))
-            @st.cache_data
-            def get_df_2_setor():
-                df_2_setor = df_2.groupby(['Setor','Estado']).size().reset_index(name='Contagem').sort_values(by='Contagem')
-                return df_2_setor
-            
-            df_2_setor = get_df_2_setor()
-            df_2_setor = df_2_setor[df_2_setor['Estado'] == target_state]
-
-            fig2 = px.bar(df_2_setor, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Principais Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'],height=400)
-            fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
-            st.plotly_chart(fig2,use_container_width=True)
+    with st.container(height= 700):
+        st_folium(
+            map,
+            center=st.session_state["center"],
+            zoom=st.session_state["zoom"],
+            key="new",
+            height=700,
+            use_container_width=True,
+            returned_objects=["last_object_clicked"]
+        )
 
     col3,col4 = st.columns(2, gap='small')
     with col3:
@@ -409,6 +395,358 @@ if selected == "DASHBOARD H2V BRASIL":
         fig4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=16),title_font=dict(size=20))    
         fig4.update_traces(showlegend=False,textinfo='label+percent',marker=dict(line=dict(color='#000000', width=1)))
         st.plotly_chart(fig4,use_container_width=True)
+
+if selected == "ANÁLISE CONSUMIDORES":
+    st.markdown('<h1 style="font-size:40px;">Análise Consumidores</h1>', unsafe_allow_html=True)
+
+    @st.cache_data
+    def get_df_2_setor():
+        df_2_setor = df_2.groupby(['Setor','Estado']).size().reset_index(name='Contagem').sort_values(by='Contagem')
+        return df_2_setor
+    
+
+
+    col_con_1,col_con_2 = st.columns(2, gap = 'small')
+    col_con_3,col_con_4 = st.columns(2, gap ='small')
+
+    with col_con_1:
+        target_state = st.selectbox('Estado', df_2['Estado'].sort_values().unique(),index=6,placeholder=('Escolha uma opção'))
+        df_2_setor = get_df_2_setor()
+        df_2_setor = df_2_setor[df_2_setor['Estado'] == target_state]
+        fig2 = px.bar(df_2_setor, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Principais Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'],height=400)
+        fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
+        st.plotly_chart(fig2,use_container_width=True)
+    with col_con_2:
+        dados = {
+        'Categoria': [
+            'Nenhuma', 
+            '1 a 2', 
+            '3 a 4', 
+            '4 a 6', 
+            '6 a 10', 
+            'Mais de 10'
+        ],
+        'Contagem': [8, 5, 0, 0, 0, 0]
+        }
+        df = pd.DataFrame(dados)
+        df['Categoria'] = pd.Categorical(df['Categoria'], categories=dados['Categoria'], ordered=True)
+        fig_con1 = px.bar(
+        df,
+        x='Contagem',        
+        y='Categoria',       
+        title='Número de plantas com consumo de H₂ operando',
+        text='Contagem',      
+        orientation='h',color_discrete_sequence=['#42f54b'],height=490    
+        )
+        fig_con1.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
+        st.plotly_chart(fig_con1,use_container_width=True)     
+    with col_con_3:
+        dados_consumo = {
+            'Faixa de Consumo': [
+                '> 1 milhão de m³ por ano',
+                '100 mil a 1 milhão m³',
+                '10.000 a 100 mil m³',
+                '1000 a 10.000 m³',
+                '0 a 1000 m³'
+            ],
+            'Numero de Empresas': [3, 0, 1, 0, 7]
+        }
+        df_consumo = pd.DataFrame(dados_consumo)
+        ordem_categorias = [
+            '> 1 milhão de m³ por ano',
+            '100 mil a 1 milhão m³',
+            '10.000 a 100 mil m³',
+            '1000 a 10.000 m³',
+            '0 a 1000 m³'
+        ]
+        df_consumo['Faixa de Consumo'] = pd.Categorical(df_consumo['Faixa de Consumo'], categories=ordem_categorias, ordered=True)
+        df_consumo = df_consumo.sort_values('Faixa de Consumo', ascending=False)
+        fig_con2 = px.bar(
+            df_consumo,
+            x='Numero de Empresas', 
+            y='Faixa de Consumo',   
+            title='Consumo anual das empresas (ordem de grandeza)',
+            text='Numero de Empresas',
+            orientation='h',color_discrete_sequence=['#42f54b']          
+        )
+        fig_con2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
+        st.plotly_chart(fig_con2,use_container_width=True) 
+    with col_con_4:
+        dados_custo = {
+            'Faixa de Custo': [
+                '< R$ 10.000',
+                'R$ 10.000 -<br>R$ 100.000',     
+                'R$ 100.000 -<br>R$ 1.000.000',  
+                '> R$ 1.000.000'
+            ],
+            'Numero de Empresas': [8, 1, 1, 1]
+        }
+        df_custo = pd.DataFrame(dados_custo)
+        fig_con3 = px.bar(
+            df_custo,
+            x='Faixa de Custo',        
+            y='Numero de Empresas',     
+            title='Custo anual da empresa com H₂',
+            text='Numero de Empresas',color_discrete_sequence=['#42f54b']
+        )
+        fig_con3.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
+        st.plotly_chart(fig_con3,use_container_width=True)     
+    # Produção Própria
+    dados_producao = {
+        'Resposta': [
+            'Não há planos de uma<br>produção própria de hidrogênio',
+            'Sim, mesmo que o custo para<br>redução da carga de CO2<br>seja mais elevado',
+            'Sim, com incentivos do governo',
+            'Sim, caso seja<br>economicamente viável (ROI < 5 anos)'
+        ],
+        'Contagem': [6, 1, 2, 4]
+    }
+    df_producao = pd.DataFrame(dados_producao)
+    ordem_respostas = [
+        'Não há planos de uma<br>produção própria de hidrogênio',
+        'Sim, mesmo que o custo para<br>redução da carga de CO2<br>seja mais elevado',
+        'Sim, com incentivos do governo',
+        'Sim, caso seja<br>economicamente viável (ROI < 5 anos)'
+    ]
+    df_producao['Resposta'] = pd.Categorical(df_producao['Resposta'], categories=ordem_respostas, ordered=True)
+    df_producao = df_producao.sort_values('Resposta', ascending=False)
+
+    fig_con4 = px.bar(
+        df_producao,
+        x='Contagem',        
+        y='Resposta',       
+        title='Produção própria baseada em fontes renováveis',
+        text='Contagem',    
+        orientation='h',color_discrete_sequence=['#42f54b']
+    )
+    fig_con4.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
+    st.plotly_chart(fig_con4,use_container_width=True)  
+
+if selected == "ANÁLISE PRODUTORES":
+    st.markdown('<h1 style="font-size:40px;">Análise Produtores</h1>', unsafe_allow_html=True)
+
+    col_prod_1,col_prod_2 = st.columns(2, gap = 'small')
+    with col_prod_1:
+        fig = px.bar(capacidade_total_estados, x = 'Estado',y = 'Capacidade',text_auto='.2s',color = 'Estágio',color_discrete_sequence=['#1e4a20','#42f54b'], title='Capacidade de Produção Por Estado (KT/ano)',height=400)
+        fig.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+        fig.update_traces(textposition='outside', cliponaxis=False)
+        st.plotly_chart(fig,use_container_width=True)
+    
+    with col_prod_2:
+        dados_tecnologia = {
+            'Tecnologia': [
+                'Outro',
+                'Processo biológico',
+                'Reforma a partir de biogás',
+                'Reforma a partir de etanol',
+                'Reforma de gás metano sem CCUS', 
+                'Reforma de gás metano com CCUS',  
+                'Eletrólise através da rede',   
+                'Eletrólise através de fontes renováveis'
+            ],
+            'Numero_de_Empresas': [9, 0, 0, 0, 1, 1, 1, 4]
+        }
+
+        df_tecnologia = pd.DataFrame(dados_tecnologia)
+        ordem_tecnologias = [
+            'Outro',
+            'Processo biológico',
+            'Reforma a partir de biogás',
+            'Reforma a partir de etanol',
+            'Reforma de gás metano sem CCUS',
+            'Reforma de gás metano com CCUS',
+            'Eletrólise através da rede',
+            'Eletrólise através de fontes renováveis'
+        ]
+        df_tecnologia['Tecnologia'] = pd.Categorical(df_tecnologia['Tecnologia'], categories=reversed(ordem_tecnologias), ordered=True)
+
+        fig_prod1 = px.bar(
+            df_tecnologia,
+            x='Numero_de_Empresas',   
+            y='Tecnologia',         
+            title='Fontes/tecnologias utilizadas pelas empresas para produção de H₂ no Brasil',
+            text='Numero_de_Empresas',
+            orientation='h',color_discrete_sequence=['#42f54b']      
+        )
+        fig_prod1.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+        fig_prod1.update_traces(textposition='outside', cliponaxis=False)
+        st.plotly_chart(fig_prod1,use_container_width=True)
+
+    col_prod_3,col_prod_4 = st.columns(2, gap = 'small')
+    
+    with col_prod_3:
+        dados_plantas = {
+            'Faixa': ['1 a 2', '3 a 4', '4 a 6', '6 a 10', 'Mais de 10', 'Nenhuma'],
+            'Numero_de_Plantas': [7, 1, 0, 1, 0, 0]
+        }
+        df_plantas = pd.DataFrame(dados_plantas)
+        fig_prod2 = px.bar(
+            df_plantas,
+            x='Faixa',
+            y='Numero_de_Plantas',
+            title='Número de plantas de produção de H₂ em produção',
+            text='Numero_de_Plantas',
+            color_discrete_sequence=['#42f54b'] 
+        )
+        fig_prod2.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+        fig_prod2.update_traces(textposition='outside', cliponaxis=False)
+        st.plotly_chart(fig_prod2,use_container_width=True)
+    
+    with col_prod_4:
+        dados_atuacao = {
+            'Area_de_Atuacao': [
+                'Prestação de Serviços<br>(Engenharia, Consultoria, etc)',
+                'Fornecimento de Tecnologia para H2',
+                'Consumo de H2',
+                'Armazenamento e Distribuição de H2'
+            ],
+            'Numero_de_Empresas': [5, 4, 1, 4]
+        }
+        df_atuacao = pd.DataFrame(dados_atuacao)
+        
+        fig_prod3 = px.bar(
+            df_atuacao,
+            x='Numero_de_Empresas',
+            y='Area_de_Atuacao',
+            orientation='h',
+            title='Áreas de atuação das empresas além da produção de H₂',
+            text='Numero_de_Empresas',
+            color_discrete_sequence=['#42f54b']
+        )
+        fig_prod3.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+        fig_prod3.update_traces(textposition='outside', cliponaxis=False)
+        st.plotly_chart(fig_prod3,use_container_width=True)
+    
+    col_prod_5,col_prod_6 = st.columns(2, gap = 'small')
+    
+    with col_prod_5:
+        dados_crescimento = {
+            'Expectativa': [
+                'Não está em nossos planos',
+                '> 50%',
+                '25% - 50%',
+                '10% - 25%',
+                '0 - 10%'
+            ],
+            'Contagem': [1, 1, 2, 2, 2]
+        }
+        df_crescimento = pd.DataFrame(dados_crescimento)
+        
+        fig_prod4 = px.bar(
+            df_crescimento,
+            x='Contagem',
+            y='Expectativa',
+            orientation='h', 
+            title='Expectativa de crescimento do<br>faturamento com a venda de H₂ verde até 2030',
+            text='Contagem',
+            color_discrete_sequence=['#42f54b']
+        )
+        fig_prod4.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+        fig_prod4.update_traces(textposition='outside', cliponaxis=False)
+        st.plotly_chart(fig_prod4,use_container_width=True)
+    
+    with col_prod_6:
+        dados_setores = {
+            'Setor': [
+                'Outro',
+                'Óleo & Gás',
+                'Geração de energia',
+                'Alimentos e Bebidas',
+                'Fertilizantes',
+                'Siderúrgico',
+                'Químico/Petroquímico'
+            ],
+            'Numero_de_Empresas': [6, 2, 1, 2, 0, 1, 2]
+        }
+        df_setores = pd.DataFrame(dados_setores)
+        fig_prod5 = px.bar(
+            df_setores,
+            x='Numero_de_Empresas',
+            y='Setor',
+            orientation='h',
+            title='Setores de atuação das empresas<br>respondentes',
+            text='Numero_de_Empresas',
+            color_discrete_sequence=['#42f54b']
+        )
+        fig_prod5.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+        fig_prod5.update_traces(textposition='outside', cliponaxis=False)
+        st.plotly_chart(fig_prod5,use_container_width=True)
+
+if selected == "ANÁLISE P&D":
+    st.markdown('<h1 style="font-size:40px;">Análise P&D</h1>', unsafe_allow_html=True)
+
+    col_pes_1,col_pes_2 = st.columns(2, gap='small')
+    with col_pes_1:
+        dados_cursos = {
+            'Area': [
+                'Outro (especifique)', 'Equipamentos industriais', 'Fertilizantes', 'Cimento',
+                'Alimentos e Bebidas', 'Siderúrgicas', 'Usina de álcool e açúcar', 'Química',
+                'Geração de eletricidade', 'Construtoras', 'Mineradoras', 'Gás e petróleo',
+                'Transporte/Mobilidade'
+            ],
+            'Contagem': [9, 6, 6, 4, 3, 6, 5, 10, 15, 4, 9, 9, 7]
+        }
+        df_cursos = pd.DataFrame(dados_cursos)
+
+        fig_pes1 = px.bar(
+            df_cursos,
+            x='Contagem',
+            y='Area',
+            orientation='h',
+            title='Áreas dos cursos das instituições',
+            text='Contagem',
+            color_discrete_sequence=['#42f54b']
+        )
+        fig_pes1.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+        fig_pes1.update_traces(textposition='outside', cliponaxis=False)
+        st.plotly_chart(fig_pes1,use_container_width=True)
+        
+    with col_pes_2:
+        dados_grupos = {
+        'Faixa_de_Grupos': [
+            'De 1 a 5',
+            'De 6 a 10',
+            'De 11 a 20',
+            'De 21 a 50',
+            'Mais de 50'
+        ],
+        'Contagem': [25, 0, 0, 0, 0]
+        }
+        df_grupos = pd.DataFrame(dados_grupos)
+        fig_pes2 = px.bar(
+            df_grupos,
+            x='Faixa_de_Grupos',
+            y='Contagem',
+            title='Grupos de pesquisa da instituição na<br>área de hidrogênio',
+            text='Contagem',
+            color_discrete_sequence=['#42f54b']
+        )
+        fig_pes2.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+        fig_pes2.update_traces(textposition='outside', cliponaxis=False)
+        st.plotly_chart(fig_pes2,use_container_width=True)
+
+    dados_grupos = {
+        'Faixa_de_Grupos': [
+            'De 1 a 5',
+            'De 6 a 10',
+            'De 11 a 20',
+            'De 21 a 50',
+            'Mais de 50'
+        ],
+        'Contagem': [25, 0, 0, 0, 0]
+    }
+    df_grupos = pd.DataFrame(dados_grupos)
+    fig_pes3 = px.bar(
+        df_grupos,
+        x='Faixa_de_Grupos',
+        y='Contagem',
+        title='Grupos de pesquisa da instituição na<br>área de hidrogênio',
+        text='Contagem',
+        color_discrete_sequence=['#42f54b']
+    )
+    fig_pes3.update_layout(xaxis_title ='',title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,legend=dict(orientation='h',yanchor='top',y=-0.1,xanchor='center',x=0.3,font=dict(size=14)),font=dict(size=18),title_font=dict(size=20))    
+    fig_pes3.update_traces(textposition='outside', cliponaxis=False)
+    st.plotly_chart(fig_pes3,use_container_width=True,key='matheus')
 
 if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
     st.markdown('<h1 style="font-size:40px;">Formulario Geral</h>', unsafe_allow_html=True)
