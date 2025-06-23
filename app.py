@@ -351,6 +351,7 @@ with st.sidebar:
     selected = option_menu(
             "Menu",
             [
+                "APRESENTAÇÃO DA FERRAMENTA",
                 "MAPA H2V BRASIL",
                 "ANÁLISE CONSUMIDORES",
                 "ANÁLISE PRODUTORES",
@@ -362,7 +363,37 @@ with st.sidebar:
             default_index=0,
             orientation="vertical"
         )
-    
+
+if selected == "APRESENTAÇÃO DA FERRAMENTA":
+    st.image("logo_unifei.png",width = 100)
+    st.title("Bem-vindo ao H2V Brasil 🌎")
+    st.markdown("""
+                Bem-vindo à plataforma interativa que mapeia o ecossistema de Hidrogênio Verde (H2V) no Brasil. Esta não é apenas uma visualização de dados, mas uma solução tecnológica integrada, desenvolvida para conectar e apresentar os principais agentes que impulsionam a transição energética no país.
+
+                Explore o dashboard para identificar e analisar a fundo os diferentes participantes desta cadeia, focando nos três pilares centrais: os produtores de H2V, os grandes consumidores industriais e as instituições de Pesquisa e Desenvolvimento (P&D) que fomentam a inovação no setor.
+
+                As análises iniciais, baseadas em dados públicos, já revelam insights importantes, como a forte concentração de projetos de produção próximos a fontes renováveis e o notável polo de consumo na região Sudeste. O diferencial desta plataforma é sua capacidade de evoluir: com a obtenção de mais dados através do nosso formulário de captação, as análises se tornam continuamente mais precisas e completas, fortalecendo a ferramenta como um recurso estratégico para o futuro da energia no Brasil.    
+                """)        
+    st.divider()
+    st.header("Guia Rápido: Como Navegar pela Ferramenta")
+    st.markdown("""
+    Toda a navegação é feita pela **barra lateral à esquerda**.
+
+    #### 1. Escolha a Visualização
+    No primeiro seletor do menu, você pode alternar entre as principais páginas da análise:
+    - **Apresentação da Ferramenta:** Este texto de boas-vindas.
+    - **Mapa H2V Brasil:** Onde você explora os dados de forma geográfica, no canto superior direito do gráfico você pode filtrar os dados que desejáveis.
+    - **Análise Consumidores:** Gráficos detalhados sobre o consumo de hidrogênio verde.
+    - **Análise Produtores:** Gráficos detalhados sobre a produção de hidrogênio verde.
+    - **Análise P&D:** Gráficos detalhados sobre a Pesquisa e Desenvolvimento de hidrogênio verde.
+    - **Formulário de Captação de Dados:** Onde se encontra os formulários a serem preenchidos pelos agentes do hidrogênio verde no Brasil, na página haverá mais informações sobre eles.
+
+    #### 2. Use os Filtros
+    Dependendo da página, novos filtros aparecerão, como por exemplo selecionar um estado ou um setor.
+
+    Os mapas e gráficos responderão instantaneamente às suas seleções. Passe o mouse sobre os elementos para ver mais informações.
+    """)
+
 if selected == "MAPA H2V BRASIL":
     st.markdown('<h1 style="font-size:40px;">Mapeamento do H2V no Brasil</h1>', unsafe_allow_html=True)
 
@@ -411,9 +442,24 @@ if selected == "ANÁLISE CONSUMIDORES":
 
     with col_con_1:
         target_state = st.selectbox('Estado', df_2['Estado'].sort_values().unique(),index=6,placeholder=('Escolha uma opção'))
+        
         df_2_setor = get_df_2_setor()
-        df_2_setor = df_2_setor[df_2_setor['Estado'] == target_state]
-        fig2 = px.bar(df_2_setor, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Principais Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'],height=400)
+        
+        todos_os_estados = df_2_setor['Estado'].unique()
+        todos_os_setores = sorted(df_2_setor['Setor'].unique())
+        idx = pd.MultiIndex.from_product([todos_os_estados, todos_os_setores], names=['Estado', 'Setor'])
+        df_completo = pd.DataFrame(index=idx).reset_index()
+        
+        df_completo_com_dados = pd.merge(
+            df_completo,
+            df_2_setor,
+            on=['Estado', 'Setor'],
+            how='left'
+        ).fillna({'Contagem': 0})
+        df_completo_com_dados['Contagem'] = df_completo_com_dados['Contagem'].astype(int)
+        df_para_plotar = df_completo_com_dados[df_completo_com_dados['Estado'] == target_state]
+
+        fig2 = px.bar(df_para_plotar, x = 'Setor',y = 'Contagem', text_auto='.2s',title='Principais Consumidores de Hidrogênio por Estado',color_discrete_sequence=['#42f54b'],height=400)
         fig2.update_layout(title_yref='container',title_xanchor='center',title_x=0.5,title_y=0.95,title_font=dict(size=20),font=dict(size=18))    
         st.plotly_chart(fig2,use_container_width=True)
     with col_con_2:
@@ -749,7 +795,17 @@ if selected == "ANÁLISE P&D":
     st.plotly_chart(fig_pes3,use_container_width=True,key='matheus')
 
 if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
-    st.markdown('<h1 style="font-size:40px;">Formulario Geral</h>', unsafe_allow_html=True)
+    st.title("Formulário de captação de dados")
+    st.markdown("""
+        Sua colaboração é fundamental para que este mapa se torne uma representação cada vez mais precisa e completa do ecossistema de H2V no Brasil. Ao compartilhar as informações da sua organização, você nos ajuda a fortalecer esta ferramenta de análise e a impulsionar o planejamento estratégico do setor energético nacional.
+        """)
+    st.info("""
+        **Como funciona?** Para garantir a qualidade e a relevância dos dados, nosso formulário é dividido em duas etapas simples, detalhadas abaixo.
+        """)
+    st.header("Parte 1: Cadastro Geral e Localização")
+    st.markdown("Esta seção deve ser preenchida por todos os participantes.")
+
+    # st.markdown('<h1 style="font-size:40px;">Formulario Geral</h>', unsafe_allow_html=True)
     with st.form('my_form_1'):
         col1, col2 = st.columns([0.5,0.5])
         with col1:
@@ -812,8 +868,11 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
             else:
                 st.warning("Por favor, preencha todos os campos do endereço.")
 
-    
-    st.markdown('<h1 style="font-size:40px;">Formulario Específico</h1>',unsafe_allow_html=True)
+    st.divider()
+    st.header("Parte 2: Formulário Específico por Atuação")
+    st.markdown("Selecione seu tipo de agente para ver as perguntas específicas.")
+
+    # st.markdown('<h1 style="font-size:40px;">Formulario Específico</h1>',unsafe_allow_html=True)
     if area == 'Consumo':
         with st.form('my_form_2'):
             col11,col12 = st.columns(2)
