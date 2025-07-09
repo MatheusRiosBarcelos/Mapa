@@ -851,6 +851,7 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
                         location_coords = geometry.get('location', {})
                         latitude = location_coords.get('lat')
                         longitude = location_coords.get('lng')
+                        
                         latitude = str(latitude) if latitude is not None else None
                         longitude = str(longitude) if longitude is not None else None
 
@@ -896,6 +897,12 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
             if submitted_2:
                 latitude = st.session_state.get('latitude')
                 longitude = st.session_state.get('longitude')
+                if (
+                    (df_2['Latitude'] == latitude) & 
+                    (df_2['Longitude'] == longitude)
+                ).any():
+                    # Aumenta levemente a longitude para evitar sobreposição
+                    longitude = str(float(longitude) + 0.0002)
 
                 print(f"Latitude final: {latitude} (Tipo: {type(latitude)})")
                 print(f"Longitude final: {longitude} (Tipo: {type(longitude)})")
@@ -933,6 +940,13 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
             if submitted_3:
                 latitude = st.session_state.get('latitude')
                 longitude = st.session_state.get('longitude')
+                
+                if (
+                    (df_projects['Latitude'] == latitude) & 
+                    (df_projects['Longitude'] == longitude)
+                ).any():
+                    # Aumenta levemente a longitude para evitar sobreposição
+                    longitude = str(float(longitude) + 0.0002)
 
                 insert_data_to_db_projects(rua,cidade,estado,num,bairro,finalidade,estagio,capacidade,latitude,longitude,engine)
                 st.success("Formulário Registrado")
@@ -950,16 +964,23 @@ if selected =="FORMULÁRIO CAPTAÇÃO DE DADOS":
 
             cold11,cold12 = st.columns(2)
             with cold11:
-                qntd_grupos = st.number_input('Atualmente, quantos grupos de pesquisa na área de hidrogênio a isntituição possui?', step=1)
+                qntd_grupos = st.number_input('Atualmente, quantos grupos de pesquisa na área de hidrogênio a instituição possui?', step=1)
             with cold12:
                 qntd_realizados = st.number_input('Quantos projetos na área de hidrogênio já foram realziados pela instituição?', step=1)
 
-            projetos = st.text_area('Quais foram esses projetos realziados pela instituição?') 
+            projetos = st.text_area('Quais foram esses projetos realizados pela instituição?') 
 
             submitted_4 = st.form_submit_button("Envia Formulário Completo")
             if submitted_4:
                 latitude = st.session_state.get('latitude')
                 longitude = st.session_state.get('longitude')
+                
+                if (
+                    (df['Latitude'] == latitude) & 
+                    (df['Longitude'] == longitude)
+                ).any():
+                    # Aumenta levemente a longitude para evitar sobreposição
+                    longitude = str(float(longitude) + 0.0002)
 
                 insert_data_to_db_pesquisa(rua,cidade,estado,num,bairro,area_pesquisa,site,projetos,latitude,longitude,engine)
                 st.success("Formulário Registrado")
